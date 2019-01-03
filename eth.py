@@ -1,4 +1,8 @@
+import time
+from datetime import datetime
+
 import pandas as pd
+import pytz
 import requests
 from pandas import DataFrame
 
@@ -20,18 +24,31 @@ pd.set_option('display.max_rows', None)
 USDT_BALANCE = 3000
 COIN_BALANCE = 0
 TAX = 0.02
+KLINE_START = '2018-01-01T00:00:00.000Z'
+TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.000Z'
 
 
 def get_candle_df():
-    r = requests.get("https://www.okex.com/api/spot/v3/instruments/{}/candles?granularity={}".format(PAIR, PERIOD))
-    if r.status_code != 200:
-        return None
-    sticks = []
-    for item in r.json():
-        stick = [item['time'], float(item['open']), float(item['high']), float(item['low']), float(item['close']),
-                 float(item['volume'])]
-        sticks.insert(0, stick)
-    return DataFrame(sticks, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
+    start = int(datetime.strptime(KLINE_START, TIME_FORMAT).timestamp() - time.altzone)
+    end = int(time.time() // PERIOD * PERIOD)
+    _df = DataFrame()
+    for ts in range(start, end, PERIOD * 200):
+        formatted_time = datetime.fromtimestamp(ts, pytz.UTC).strftime(TIME_FORMAT)
+        end_formatted_time = datetime.fromtimestamp(ts + PERIOD * 200, pytz.UTC).strftime(TIME_FORMAT)
+        print(formatted_time)
+        r = requests.get(
+            "https://www.okex.com/api/spot/v3/instruments/{}/candles?granularity={}&start={}&end={}".format(
+                PAIR, PERIOD, formatted_time, end_formatted_time))
+        if r.status_code != 200:
+            return None
+        sticks = []
+        for item in r.json():
+            stick = [item['time'], float(item['open']), float(item['high']), float(item['low']), float(item['close']),
+                     float(item['volume'])]
+            sticks.insert(0, stick)
+        df = DataFrame(sticks, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
+        _df = pd.concat([_df, df], ignore_index=True)
+    return _df
 
 
 def buy(price):
@@ -61,7 +78,7 @@ def run():
     r = SuperTrend(df, period, multi)
     print(r.to_string())
     for idx, row in r.iterrows():
-        if idx < period + 1:
+        if idx <= period + 1:
             continue
         if row[stx] != r.loc[idx - 1, stx]:
             if row[stx] == 'up':
