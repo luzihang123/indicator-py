@@ -19,19 +19,19 @@ granularity	        integer	        [非必填]以秒来计量的时间粒度
 instrument_id	    string	        [必填]币对
 """
 PAIR = 'eth_usdt'
-PERIOD = 3600 * 2
+PERIOD = 3600
 pd.set_option('display.max_rows', None)
 USDT_BALANCE = 3000
 COIN_BALANCE = 0
 TAX = 0.02
-KLINE_START = '2018-01-01T00:00:00.000Z'
+KLINE_START = '2018-10-15T00:00:00.000Z'
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.000Z'
 
 
 def get_candle_df():
     start = int(datetime.strptime(KLINE_START, TIME_FORMAT).timestamp() - time.altzone)
     end = int(time.time() // PERIOD * PERIOD)
-    _df = DataFrame()
+    _df = []
     for ts in range(start, end, PERIOD * 200):
         formatted_time = datetime.fromtimestamp(ts, pytz.UTC).strftime(TIME_FORMAT)
         end_formatted_time = datetime.fromtimestamp(ts + PERIOD * 200, pytz.UTC).strftime(TIME_FORMAT)
@@ -46,9 +46,10 @@ def get_candle_df():
             stick = [item['time'], float(item['open']), float(item['high']), float(item['low']), float(item['close']),
                      float(item['volume'])]
             sticks.insert(0, stick)
-        df = DataFrame(sticks, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
-        _df = pd.concat([_df, df], ignore_index=True)
-    return _df
+        _temp = DataFrame(sticks, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
+        _df.append(_temp)
+
+    return pd.concat(_df, ignore_index=True)
 
 
 def buy(price):
@@ -71,8 +72,8 @@ def summary(price):
 
 def run():
     df = get_candle_df()
-    period = 7
-    multi = 3
+    period = 11
+    multi = 6
     # st = 'ST_{}_{}'.format(period, multi)
     stx = 'STX_{}_{}'.format(period, multi)
     r = SuperTrend(df, period, multi)
