@@ -180,7 +180,7 @@ def ATR(df, period, ohlc=['Open', 'High', 'Low', 'Close']):
     return df
 
 
-def SuperTrend(df, period, multiplier, ohlc=['Open', 'High', 'Low', 'Close']):
+def SuperTrend(df, period, multiplier, ohlc=['open', 'high', 'low', 'close']):
     """
     Function to compute SuperTrend
 
