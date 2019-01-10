@@ -35,7 +35,7 @@ def get_candle_df():
     for ts in range(start, end, PERIOD * 200):
         formatted_time = datetime.fromtimestamp(ts, pytz.UTC).strftime(TIME_FORMAT)
         end_formatted_time = datetime.fromtimestamp(ts + PERIOD * 200, pytz.UTC).strftime(TIME_FORMAT)
-        print(formatted_time)
+        print('\rget data start at: {}'.format(formatted_time), end='')
         r = requests.get(
             "https://www.okex.com/api/spot/v3/instruments/{}/candles?granularity={}&start={}&end={}".format(
                 PAIR, PERIOD, formatted_time, end_formatted_time))
@@ -70,14 +70,23 @@ def summary(price):
     print("END:   USDT: {}, COIN: {}, USDT_ALL: {}".format(USDT_BALANCE, COIN_BALANCE, COIN_BALANCE * price))
 
 
-def run():
+def run_super_trend():
     df = get_candle_df()
-    period = 11
-    multi = 6
-    # st = 'ST_{}_{}'.format(period, multi)
-    stx = 'STX_{}_{}'.format(period, multi)
+    period, multi = 11, 6
     r = SuperTrend(df, period, multi)
-    print(r.to_string())
+    target = r.loc[len(r) - 1, 'ST_{}_{}'.format(period, multi)]
+    target_d = r.loc[len(r) - 1, 'STX_{}_{}'.format(period, multi)]
+    print("\n参数: {}, {}: 现价: {}，目标: {}, 方向: {}".format(period, multi, r.loc[len(r) - 1, 'close'], target, target_d))
+    period, multi = 7, 3
+    r = SuperTrend(df, period, multi)
+    target = r.loc[len(r) - 1, 'ST_{}_{}'.format(period, multi)]
+    target_d = r.loc[len(r) - 1, 'STX_{}_{}'.format(period, multi)]
+    print("参数: {}, {}: 现价: {}，目标: {}, 方向: {}".format(period, multi, r.loc[len(r) - 1, 'close'], target, target_d))
+
+
+def sp_trade(r, period, multi):
+    stx = 'STX_{}_{}'.format(period, multi)
+    direction = None
     for idx, row in r.iterrows():
         if idx <= period + 1:
             continue
@@ -95,4 +104,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    run_super_trend()

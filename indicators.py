@@ -264,7 +264,7 @@ def SuperTrend(df, period, multiplier, ohlc=['open', 'high', 'low', 'close']):
     return df
 
 
-def MACD(df, fastEMA=12, slowEMA=26, signal=9, base='Close'):
+def MACD(df, fastEMA=12, slowEMA=26, signal=9, base='close'):
     """
     Function to compute Moving Average Convergence Divergence (MACD)
 
@@ -415,4 +415,15 @@ def Ichimoku(df, ohlc=['Open', 'High', 'Low', 'Close'], param=[9, 26, 52, 26]):
     # The most current closing price plotted chikou_span_period time periods behind
     df[chikou_span_column] = close.shift(-1 * chikou_span_period)
 
+    return df
+
+
+def MA(df, low, high):
+    df['MA_' + str(low)] = df['close'].rolling(low).mean()
+    df['MA_' + str(high)] = df['close'].rolling(high).mean()
+    for idx, row in df.iterrows():
+        if row['MA_' + str(low)] > row['MA_' + str(high)]:
+            df.loc[idx, 'D'] = 'up'
+        if row['MA_' + str(low)] < row['MA_' + str(high)]:
+            df.loc[idx, 'D'] = 'down'
     return df
