@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from math import ceil
 
 import pandas as pd
 import pytz
@@ -32,10 +33,11 @@ def get_candle_df():
     start = int(datetime.strptime(KLINE_START, TIME_FORMAT).timestamp() - time.altzone)
     end = int(time.time() // PERIOD * PERIOD)
     _df = []
-    for ts in range(start, end, PERIOD * 200):
+    length = ceil((end - start) / (PERIOD * 200))
+    for idx, ts in enumerate(range(start, end, PERIOD * 200)):
         formatted_time = datetime.fromtimestamp(ts, pytz.UTC).strftime(TIME_FORMAT)
         end_formatted_time = datetime.fromtimestamp(ts + PERIOD * 200, pytz.UTC).strftime(TIME_FORMAT)
-        print('\rget data start at: {}'.format(formatted_time), end='')
+        print('\rGet data: {:.2f}%'.format((idx + 1) / length * 100), end='')
         r = requests.get(
             "https://www.okex.com/api/spot/v3/instruments/{}/candles?granularity={}&start={}&end={}".format(
                 PAIR, PERIOD, formatted_time, end_formatted_time))
